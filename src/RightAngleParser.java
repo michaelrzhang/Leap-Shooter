@@ -74,8 +74,8 @@ public class RightAngleParser {
                     z = Float.parseFloat(parsed[3].substring(1, parsed[3].length() - 1));
                     middle = new Vector(x, y , z);
                     // System.out.println(middle);
-                    System.out.println(parseRightAngle(thumb, middle));
-                    if (parseRightAngle(thumb, middle)) {
+                    System.out.println(parseRightAngle(thumb, index, middle));
+                    if (parseRightAngle(thumb, index, middle)) {
                         success += 1;
                         total += 1;
                     } else {
@@ -99,10 +99,12 @@ public class RightAngleParser {
     }
 
     /** Returns whether two vectors form a right angle */
-    public static boolean parseRightAngle(Vector first, Vector second) {
-        float dot = first.dot(second);
-        System.out.println(dot);
-        return (Math.abs((Math.acos(dot) - Math.PI/2)) < 0.43);
+    public static boolean parseRightAngle(Vector thumb, Vector index, Vector middle) {
+        float dot = thumb.dot(middle);
+        // System.out.println(dot);
+        return (Math.abs((Math.acos(dot) - Math.PI/2)) < 0.43) && 
+        (Math.abs((Math.acos(thumb.dot(index)) - Math.PI/2)) < 0.43) &&
+        index.dot(middle) > 0.93;
     }
 
     /** Helper function that returns the dot product of two vectors */
