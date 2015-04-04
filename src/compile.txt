@@ -1,0 +1,6 @@
+what to do to compile
+
+javac -classpath ./LeapJava.jar RightAngleParser.java 
+
+java -classpath "./LeapJava.jar:." RightAngleParser
+
