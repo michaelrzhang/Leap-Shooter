@@ -29,33 +29,60 @@ import java.io.File;
 public class RightAngleParser {
     public static void main(String[] args) {
         BufferedReader reader = null;
+        dotProductTest();
         try {
             File file = new File("data.txt");
             reader = new BufferedReader(new FileReader(file));
             String line;
             String[] parsed;
             float x, y, z;
-            Vector thumb, index, middle;
+            Vector thumb = null;
+            Vector index = null;
+            Vector middle = null;
+            int total = 0;
+            int success = 0;
             while ((line = reader.readLine()) != null) {
-                // if (line.contains("THUMB")) {
-                //     System.out.println(line);
-                //     parsed = line.split(",");
-                //     /** Debugging */
-                //     // System.out.println(parsed[1].substring(13));
-                //     // System.out.println(parsed[2].substring(1));
-                //     // System.out.println(parsed[3].substring(1));
-                //     x = Float.parseFloat(parsed[1].substring(13));
-                //     y = Float.parseFloat(parsed[2].substring(1));
-                //     z = Float.parseFloat(parsed[3].substring(1, parsed[3].length() - 1));
-                //     /** Debugging */
-                //     // System.out.println(x);
-                //     // System.out.println(y);
-                //     // System.out.println(z);
-                //     thumb = new Vector(x, y , z);
-                //     System.out.println(thumb);
-                // } else if (line.contains("INDEX")) {
-
-                // }
+                if (line.contains("THUMB")) {
+                    // System.out.println(line);
+                    parsed = line.split(",");
+                    /** Debugging */
+                    // System.out.println(parsed[1].substring(13));
+                    // System.out.println(parsed[2].substring(1));
+                    // System.out.println(parsed[3].substring(1));
+                    x = Float.parseFloat(parsed[1].substring(13));
+                    y = Float.parseFloat(parsed[2].substring(1));
+                    z = Float.parseFloat(parsed[3].substring(1, parsed[3].length() - 1));
+                    /** Debugging */
+                    // System.out.println(x);
+                    // System.out.println(y);
+                    // System.out.println(z);
+                    thumb = new Vector(x, y , z);
+                    System.out.println(thumb);
+                } else if (line.contains("INDEX")) {
+                    // System.out.println(line);
+                    parsed = line.split(",");
+                    x = Float.parseFloat(parsed[1].substring(13));
+                    y = Float.parseFloat(parsed[2].substring(1));
+                    z = Float.parseFloat(parsed[3].substring(1, parsed[3].length() - 1));
+                    index = new Vector(x, y , z);
+                    System.out.println(index);
+                } else if (line.contains("MIDDLE")) {
+                    // System.out.println(line);
+                    parsed = line.split(",");
+                    x = Float.parseFloat(parsed[1].substring(13));
+                    y = Float.parseFloat(parsed[2].substring(1));
+                    z = Float.parseFloat(parsed[3].substring(1, parsed[3].length() - 1));
+                    middle = new Vector(x, y , z);
+                    // System.out.println(middle);
+                    System.out.println(parseRightAngle(thumb, middle));
+                    if (parseRightAngle(thumb, middle)) {
+                        success += 1;
+                        total += 1;
+                    } else {
+                        total += 1;
+                    }
+                    System.out.println((double) success / total);
+                }   
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -75,7 +102,7 @@ public class RightAngleParser {
     public static boolean parseRightAngle(Vector first, Vector second) {
         float dot = first.dot(second);
         System.out.println(dot);
-        return (dot < 0.4);
+        return (Math.abs((Math.acos(dot) - Math.PI/2)) < 0.43);
     }
 
     /** Helper function that returns the dot product of two vectors */
@@ -98,10 +125,15 @@ public class RightAngleParser {
         b = (float) 0.8;
         c = 0;
         Vector third = new Vector(a, b, c);
+        a = (float) -0.6;
+        b = (float) -0.8;
+        c = 0;
+        Vector fourth = new Vector(a, b, c);
         System.out.println(dot(first, second));
         System.out.println(dot(first, third));
         System.out.println(Math.acos(dot(first, second)));
-        System.out.println(Math.acos(dot(first, third)));
+        System.out.println(Math.PI - Math.acos(dot(first, third)));
+        System.out.println(Math.PI - Math.acos(dot(first, fourth)));
     }
 
 }
