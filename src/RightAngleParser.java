@@ -21,12 +21,57 @@
 import com.leapmotion.leap.*;
 import com.leapmotion.leap.Vector;
 import com.leapmotion.leap.Gesture.State;
+import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.File;
+
 public class RightAngleParser {
     public static void main(String[] args) {
-        Vector thumb = new Vector((float) -0.919814, (float) 0.118805, (float) -0.373936);
-        Vector index = new Vector((float) 0.0484073, (float) -0.0685681, (float) -0.996471);
-        parseRightAngle(thumb, index);
+        BufferedReader reader = null;
+        try {
+            File file = new File("data.txt");
+            reader = new BufferedReader(new FileReader(file));
+            String line;
+            String[] parsed;
+            float x, y, z;
+            Vector thumb, index, middle;
+            while ((line = reader.readLine()) != null) {
+                // if (line.contains("THUMB")) {
+                //     System.out.println(line);
+                //     parsed = line.split(",");
+                //     /** Debugging */
+                //     // System.out.println(parsed[1].substring(13));
+                //     // System.out.println(parsed[2].substring(1));
+                //     // System.out.println(parsed[3].substring(1));
+                //     x = Float.parseFloat(parsed[1].substring(13));
+                //     y = Float.parseFloat(parsed[2].substring(1));
+                //     z = Float.parseFloat(parsed[3].substring(1, parsed[3].length() - 1));
+                //     /** Debugging */
+                //     // System.out.println(x);
+                //     // System.out.println(y);
+                //     // System.out.println(z);
+                //     thumb = new Vector(x, y , z);
+                //     System.out.println(thumb);
+                // } else if (line.contains("INDEX")) {
+
+                // }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                reader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        // Vector thumb = new Vector((float) -0.919814, (float) 0.118805, (float) -0.373936);
+        // Vector index = new Vector((float) 0.0484073, (float) -0.0685681, (float) -0.996471);
+        // parseRightAngle(thumb, index);
     }
+
+    /** Returns whether two vectors form a right angle */
     public static boolean parseRightAngle(Vector first, Vector second) {
         float dot = first.dot(second);
         System.out.println(dot);
@@ -36,6 +81,27 @@ public class RightAngleParser {
     /** Helper function that returns the dot product of two vectors */
     public static float dot(Vector first, Vector second) {
         return first.dot(second);
+    }
+
+    /** Some experiments to see what angle is good */
+    public static void dotProductTest() {
+        float a, b, c;
+        a = 1;
+        b = 0;
+        c = 0;
+        Vector first = new Vector(a, b, c);
+        a = (float) 0.6;
+        b = (float) 0.8;
+        c = 0;
+        Vector second = new Vector(a, b, c);
+        a = (float) -0.6;
+        b = (float) 0.8;
+        c = 0;
+        Vector third = new Vector(a, b, c);
+        System.out.println(dot(first, second));
+        System.out.println(dot(first, third));
+        System.out.println(Math.acos(dot(first, second)));
+        System.out.println(Math.acos(dot(first, third)));
     }
 
 }
