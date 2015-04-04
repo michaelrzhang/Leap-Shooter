@@ -45,9 +45,9 @@ class SampleListener extends Listener {
 
         //Get hands
         for(Hand hand : frame.hands()) {
-        	Punch punches = new Punch(controller);
-        	System.out.println(punches.leftPunch());
-        	System.out.println(punches.rightPunch());
+        	Block block = new Block(controller);
+            System.out.println("Block: " + block.isBlock());
+            //String handType = hand.isLeft() ? "Left hand" : "Right hand";
             String handType = hand.isLeft() ? "Left hand" : "Right hand";
             // System.out.println("  " + handType + ", id: " + hand.id()
             //                  + ", palm position: " + hand.palmPosition());
