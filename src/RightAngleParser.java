@@ -104,13 +104,13 @@ public class RightAngleParser {
         float dot = thumb.dot(middle);
         // System.out.println(dot);
         System.out.println("====New test!====");
-        if (Math.abs((Math.acos(dot) - Math.PI/2)) < 0.43) {
+        if (Math.abs((Math.acos(dot) - Math.PI/2)) < 0.48) {
             System.out.println("Pass 1!");
         }
-        if (Math.abs(Math.acos(thumb.dot(index)) - Math.PI/2) < 0.43) {
+        if (Math.abs(Math.acos(thumb.dot(index)) - Math.PI/2) < 0.48) {
             System.out.println("Pass 2!");
         }
-        if (index.dot(middle) > 0.93) {
+        if (index.dot(middle) > 0.90) {
             System.out.println("Pass 3!");
         }
         return (Math.abs((Math.acos(dot) - Math.PI/2)) < 0.43) && 
