@@ -72,7 +72,7 @@ class SampleListener extends Listener {
                 // FileWriter fw = new FileWriter(data.getAbsoluteFile());
                 // BufferedWriter bw = new BufferedWriter(fw);
                  // bw.write(normal.toString());
-                Test.pw.println("Normal: " + normal.toString());
+                // Test.pw.println("Normal: " + normal.toString());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -90,8 +90,8 @@ class SampleListener extends Listener {
                 }
                 if (finger.type().toString().equals("TYPE_MIDDLE")) {
                     middle = finger.direction();
-                    // System.out.println("Middle Finger Tip: " + finger.tipPosition());
-                    // System.out.println("Middle Finger Direction: " + finger.direction());
+                    System.out.println("Middle Finger Tip: " + finger.tipPosition());
+                    System.out.println("Middle Finger Direction: " + finger.direction());
                 }
                 if (finger.type().toString().equals("TYPE_INDEX")) {
                     index = finger.direction();
