@@ -199,7 +199,7 @@ class SampleListener extends Listener {
 }
 
 
-public class Test {
+public class Movements {
     public static PrintWriter pw;
 
     public static void main(String[] args) {
