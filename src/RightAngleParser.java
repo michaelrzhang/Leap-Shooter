@@ -113,8 +113,8 @@ public class RightAngleParser {
         // if (index.dot(middle) > 0.90) {
         //     System.out.println("Pass 3!");
         // }
-        return (Math.abs((Math.acos(dot) - Math.PI/2)) < 0.48) && 
-        (Math.abs((Math.acos(thumb.dot(index)) - Math.PI/2)) < 0.48) &&
+        return (Math.abs((Math.acos(dot) - Math.PI/2)) < 0.55) && 
+        (Math.abs((Math.acos(thumb.dot(index)) - Math.PI/2)) < 0.55) &&
         index.dot(middle) > 0.90;
     }
 
