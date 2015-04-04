@@ -103,19 +103,19 @@ public class RightAngleParser {
     public static boolean parseRightAngle(Vector thumb, Vector index, Vector middle) {
         float dot = thumb.dot(middle);
         // System.out.println(dot);
-        System.out.println("====New test!====");
-        if (Math.abs((Math.acos(dot) - Math.PI/2)) < 0.48) {
-            System.out.println("Pass 1!");
-        }
-        if (Math.abs(Math.acos(thumb.dot(index)) - Math.PI/2) < 0.48) {
-            System.out.println("Pass 2!");
-        }
-        if (index.dot(middle) > 0.90) {
-            System.out.println("Pass 3!");
-        }
-        return (Math.abs((Math.acos(dot) - Math.PI/2)) < 0.43) && 
-        (Math.abs((Math.acos(thumb.dot(index)) - Math.PI/2)) < 0.43) &&
-        index.dot(middle) > 0.93;
+        // System.out.println("====New test!====");
+        // if (Math.abs((Math.acos(dot) - Math.PI/2)) < 0.48) {
+        //     System.out.println("Pass 1!");
+        // }
+        // if (Math.abs(Math.acos(thumb.dot(index)) - Math.PI/2) < 0.48) {
+        //     System.out.println("Pass 2!");
+        // }
+        // if (index.dot(middle) > 0.90) {
+        //     System.out.println("Pass 3!");
+        // }
+        return (Math.abs((Math.acos(dot) - Math.PI/2)) < 0.48) && 
+        (Math.abs((Math.acos(thumb.dot(index)) - Math.PI/2)) < 0.48) &&
+        index.dot(middle) > 0.90;
     }
 
     /** Helper function that returns the dot product of two vectors */
