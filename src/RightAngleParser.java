@@ -29,7 +29,7 @@ import java.io.File;
 public class RightAngleParser {
     public static void main(String[] args) {
         BufferedReader reader = null;
-        dotProductTest();
+        // dotProductTest();
         try {
             File file = new File("data.txt");
             reader = new BufferedReader(new FileReader(file));
@@ -74,8 +74,9 @@ public class RightAngleParser {
                     z = Float.parseFloat(parsed[3].substring(1, parsed[3].length() - 1));
                     middle = new Vector(x, y , z);
                     // System.out.println(middle);
-                    System.out.println(parseRightAngle(thumb, index, middle));
-                    if (parseRightAngle(thumb, index, middle)) {
+                    // System.out.println(parseRightAngle(thumb, index, middle));
+                    boolean right = parseRightAngle(thumb, index, middle);
+                    if (right) {
                         success += 1;
                         total += 1;
                     } else {
@@ -102,6 +103,16 @@ public class RightAngleParser {
     public static boolean parseRightAngle(Vector thumb, Vector index, Vector middle) {
         float dot = thumb.dot(middle);
         // System.out.println(dot);
+        System.out.println("====New test!====");
+        if (Math.abs((Math.acos(dot) - Math.PI/2)) < 0.43) {
+            System.out.println("Pass 1!");
+        }
+        if (Math.abs(Math.acos(thumb.dot(index)) - Math.PI/2) < 0.43) {
+            System.out.println("Pass 2!");
+        }
+        if (index.dot(middle) > 0.93) {
+            System.out.println("Pass 3!");
+        }
         return (Math.abs((Math.acos(dot) - Math.PI/2)) < 0.43) && 
         (Math.abs((Math.acos(thumb.dot(index)) - Math.PI/2)) < 0.43) &&
         index.dot(middle) > 0.93;
@@ -113,29 +124,29 @@ public class RightAngleParser {
     }
 
     /** Some experiments to see what angle is good */
-    public static void dotProductTest() {
-        float a, b, c;
-        a = 1;
-        b = 0;
-        c = 0;
-        Vector first = new Vector(a, b, c);
-        a = (float) 0.6;
-        b = (float) 0.8;
-        c = 0;
-        Vector second = new Vector(a, b, c);
-        a = (float) -0.6;
-        b = (float) 0.8;
-        c = 0;
-        Vector third = new Vector(a, b, c);
-        a = (float) -0.6;
-        b = (float) -0.8;
-        c = 0;
-        Vector fourth = new Vector(a, b, c);
-        System.out.println(dot(first, second));
-        System.out.println(dot(first, third));
-        System.out.println(Math.acos(dot(first, second)));
-        System.out.println(Math.PI - Math.acos(dot(first, third)));
-        System.out.println(Math.PI - Math.acos(dot(first, fourth)));
-    }
+    // public static void dotProductTest() {
+    //     float a, b, c;
+    //     a = 1;
+    //     b = 0;
+    //     c = 0;
+    //     Vector first = new Vector(a, b, c);
+    //     a = (float) 0.6;
+    //     b = (float) 0.8;
+    //     c = 0;
+    //     Vector second = new Vector(a, b, c);
+    //     a = (float) -0.6;
+    //     b = (float) 0.8;
+    //     c = 0;
+    //     Vector third = new Vector(a, b, c);
+    //     a = (float) -0.6;
+    //     b = (float) -0.8;
+    //     c = 0;
+    //     Vector fourth = new Vector(a, b, c);
+    //     System.out.println(dot(first, second));
+    //     System.out.println(dot(first, third));
+    //     System.out.println(Math.acos(dot(first, second)));
+    //     System.out.println(Math.PI - Math.acos(dot(first, third)));
+    //     System.out.println(Math.PI - Math.acos(dot(first, fourth)));
+    // }
 
 }
