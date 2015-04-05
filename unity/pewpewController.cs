@@ -8,6 +8,12 @@ using Leap;
 	[RequireComponent(typeof (CapsuleCollider))]
 	public class pewpewController : MonoBehaviour
 	{
+		public bool punchDelay = false;
+		public bool shootDelay = false;
+		public StopWatch punchStart = new StopWatch();
+		public StopWatch shootStart = new StopWatch();
+		public boolean gunMode = true;
+
 		public class MovementSettings
 		{
 			public float ForwardSpeed = 8.0f;   // Speed when walking forward
@@ -611,6 +617,78 @@ using Leap;
 			for (int h = 0; h < num_hands; ++h) {
 				Hand hand = hands[h];
 				double zVelocity = hand.palm_velocity.z;
-
+				if (hand.grabStrength > 0.8 && zVelocity < -500) {
+					if (punchDelay == true && punchStart.ElapsedMilliseconds > 0.0005) {
+						punchDelay = !punchDelay;
+					}
+					if (!punchDelay) {
+						// Punch something
+						punchStart.Reset();
+						punchDelay = true;
+					}	
+				}
+			}	
 		}
+
+		public void shoot(Frame frame) {
+			HandList hands = frame.Hands;
+			int num_hands = hands.Count;
+			for (int h = 0; h < num_hands; ++h) {
+				Hand hand = hands[h];
+				double xVelocity = hand.palm_velocity.x;
+				if (hand.isRight) {
+					Vector thumb = null;
+					Vector index = null;
+					Vector middle = null;
+					FingerList fingers = hand.Fingers;
+					for (int i = 0; i < 5; ++i) {
+						if (i == 0) {
+							thumb = fingers[i].Direction;
+						}
+						if (i == 1) {
+							index = fingers[i].Direction;
+						}
+						if (i == 2) {
+							middle = fingers[i].Direction;
+						}
+					}
+					if (parseRightAngle(thumb, index, middle) && xVelocity < -500) {
+						gunMode = true;
+						if (shootDelay == true && shootStart.ElapsedMilliseconds > 0.0005) {
+							shootDelay = !shootDelay;
+						}
+						if (!shootDelay) {
+							// Shoot something
+							shootStart.Reset();
+							shootDelay = true;
+						}	
+					}
+				}
+			}
+		}
+
+		public void toss(Frame frame) {
+			GestureList gestures = frame.Gestures();
+			for (int i = 0; i < gestures.Count; ++i) {
+				Gesture gesture = gestures[i];
+				if (gesture.ToString().Equals("TYPE_SWIPE")) {
+					SwipeGesture swipe = new SwipeGesture(gesture);
+					if (!gunMode) {
+						Vector unit = swipe.Direction;
+						float grenadeSpeed = swipe.Speed;
+						// Throw a grenade in the direction of (unit.x * grenadeSpeed, unit.y * grenadeSpeed, unit.z * grenadeSpeed)
+					} else {
+						if (swipe.Direction.Dot(new Vector(0, -1, 0)) > 0.8) {
+							gunMode = false;
+						}
+					}
+				}
+			}
+		}
+
+		public bool parseRightAngle (Vector thumb, Vector index, Vector middle) {
+	        return (Mathf.Abs((Mathf.Acos(thumb.Dot(index)) - Mathf.PI/2)) < 0.70) && 
+	        (Mathf.Abs((Mathf.Acos(thumb.Dot(middle)) - Mathf.PI/2)) < 0.70) &&
+	        index.Dot(middle) > 0.90;
+	    }
 }
