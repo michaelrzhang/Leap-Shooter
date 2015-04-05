@@ -17,6 +17,9 @@ namespace _Scripts
 		public Stopwatch punchStart = new Stopwatch();
 		public Stopwatch shootStart = new Stopwatch();
 		public bool gunMode = true;
+//		public AudioClip gunSound = new AudioClip("gunshot.wav");
+//		public AudioClip punchSound = new AudioClip("punch.wav");
+//		public AudioClip[] audioClips;
 		
 		public class MovementSettings
 		{
@@ -358,8 +361,9 @@ namespace _Scripts
 						punchDelay = !punchDelay;
 					}
 					if (!punchDelay) {
-						punchStart.Reset();
-						punchDelay = true;
+						int clip = 1;
+						GetComponent<AudioSource>().clip = audioClips[1];
+						GetComponent<AudioSource>().Play();
 					}	
 				}
 			}	
@@ -395,7 +399,9 @@ namespace _Scripts
 						if (!shootDelay) {
 							// Shoot something
 							shootStart.Reset();
-							shootDelay = true;
+							int clip = 0;
+							GetComponent<AudioSource>().clip = audioClips[0];
+							GetComponent<AudioSource>().Play();
 						}	
 					}
 				}
