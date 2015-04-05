@@ -96,15 +96,19 @@ class SampleListener extends Listener {
                     middle = finger.direction();
                     /** X coordinate determines finger position */
                     // System.out.println(finger.direction());
-                    if (finger.tipPosition().getX() < -130 || finger.direction().getX() < -0.8) {
-                        System.out.println("LEFT!");
-                    } 
-                    if (finger.tipPosition().getX() > 130 || finger.direction().getX() > 0.7) {
-                        System.out.println("RIGHT!");
-                    } 
+                    // if (finger.tipPosition().getX() < -130 || finger.direction().getX() < -0.8) {
+                    //     System.out.println("LEFT!");
+                    // } 
+                    // if (finger.tipPosition().getX() > 130 || finger.direction().getX() > 0.7) {
+                    //     System.out.println("RIGHT!");
+                    // } 
                     /** may want to differentiate left and right since it is easier to turn left */
-                    if (Math.abs(finger.direction().getX()) > 0.6 && System.nanoTime() - shootstart > 3 * 10e8) {
+                    if (finger.direction().getX() < -0.6 && System.nanoTime() - shootstart > 3 * 10e8) {
                         System.out.println(finger.direction().getX());
+                    }
+                    /** made adjustment to make it easier to turn right */
+                    if (finger.direction().getX() > 0.5) {
+                        System.out.println(finger.direction().getX() * 4 / 5 + 0.2);
                     }
                     // System.out.println("Middle Finger Tip: " + finger.tipPosition());
                     // System.out.println("Middle Finger Direction: " + finger.direction());
