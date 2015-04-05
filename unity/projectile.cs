@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class projectile : MonoBehaviour {
-	
+public class projectile : MonoBehaviour
+{
 	private Vector3 velocity;
 	public int duration;
 	private float time_alive;
@@ -21,10 +21,10 @@ public class projectile : MonoBehaviour {
 	{
 		time_alive += Time.deltaTime;
 		if (time_alive >= duration) {
-			Destroy (this);
+			Destroy (gameObject, .5f);
 		}
 	}
 	void OnTriggerEnter(Collider other) {
-		Destroy (this);
+		Destroy (gameObject, .5f);
 	}
 }
