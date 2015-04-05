@@ -2,18 +2,22 @@
 using UnityEngine;
 using UnityStandardAssets.CrossPlatformInput;
 using Leap;
+using System.Diagnostics;
+using System.Threading;
+using System.Collections.Generic;
 
+namespace _Scripts
 {
 	[RequireComponent(typeof (Rigidbody))]
 	[RequireComponent(typeof (CapsuleCollider))]
-	public class pewpewController : MonoBehaviour
+	public class pewpewController: HandController
 	{
 		public bool punchDelay = false;
 		public bool shootDelay = false;
-		public StopWatch punchStart = new StopWatch();
-		public StopWatch shootStart = new StopWatch();
-		public boolean gunMode = true;
-
+		public Stopwatch punchStart = new Stopwatch();
+		public Stopwatch shootStart = new Stopwatch();
+		public bool gunMode = true;
+		
 		public class MovementSettings
 		{
 			public float ForwardSpeed = 8.0f;   // Speed when walking forward
@@ -24,10 +28,8 @@ using Leap;
 			public float JumpForce = 30f;
 			public AnimationCurve SlopeCurveModifier = new AnimationCurve(new Keyframe(-90.0f, 1.0f), new Keyframe(0.0f, 1.0f), new Keyframe(90.0f, 0.0f));
 			[HideInInspector] public float CurrentTargetSpeed = 8f;
-			
-			#if !MOBILE_INPUT
+
 			private bool m_Running;
-			#endif
 			
 			public void UpdateDesiredTargetSpeed(Vector2 input)
 			{
@@ -48,7 +50,6 @@ using Leap;
 					//handled last as if strafing and moving forward at the same time forwards speed should take precedence
 					CurrentTargetSpeed = ForwardSpeed;
 				}
-				#if !MOBILE_INPUT
 				if (Input.GetKey(RunKey))
 				{
 					CurrentTargetSpeed *= RunMultiplier;
@@ -58,15 +59,12 @@ using Leap;
 				{
 					m_Running = false;
 				}
-				#endif
 			}
-			
-			#if !MOBILE_INPUT
+
 			public bool Running
 			{
 				get { return m_Running; }
 			}
-			#endif
 		}
 		
 		
@@ -111,53 +109,13 @@ using Leap;
 		{
 			get
 			{
-				#if !MOBILE_INPUT
 				return movementSettings.Running;
-				#else
-				return false;
-				#endif
 			}
 		}
-
-		
-		// Reference distance from thumb base to pinky base in mm.
-		protected const float GIZMO_SCALE = 5.0f;
-		protected const float MM_TO_M = 0.001f;
-		
-		public bool separateLeftRight = false;
-		public HandModel leftGraphicsModel;
-		public HandModel leftPhysicsModel;
-		public HandModel rightGraphicsModel;
-		public HandModel rightPhysicsModel;
-		
-		public ToolModel toolModel;
-		
-		public bool isHeadMounted = false;
-		public bool mirrorZAxis = false;
-		
-		// If hands are in charge of Destroying themselves, make this false.
-		public bool destroyHands = true;
-		
-		public Vector3 handMovementScale = Vector3.one;
-		
-		// Recording parameters.
-		public bool enableRecordPlayback = false;
-		public TextAsset recordingAsset;
-		public float recorderSpeed = 1.0f;
-		public bool recorderLoop = true;
-		
-		protected LeapRecorder recorder_ = new LeapRecorder();
-		
-		protected Controller leap_controller_;
-		
-		protected Dictionary<int, HandModel> hand_graphics_;
-		protected Dictionary<int, HandModel> hand_physics_;
-		protected Dictionary<int, ToolModel> tools_;
-		
-		private bool flag_initialized_ = false;
-		private bool show_hands_ = true;
-		private long prev_graphics_id_ = 0;
-		private long prev_physics_id_ = 0;
+		private bool flaginitialized_ = false;
+		private bool showhands_ = true;
+		private long prevgraphics_id_ = 0;
+		private long prevphysics_id_ = 0;
 		
 		void OnDrawGizmos() {
 			// Draws the little Leap Motion Controller in the Editor view.
@@ -191,10 +149,10 @@ using Leap;
 			
 			tools_ = new Dictionary<int, ToolModel>();
 			
-			if (leap_controller_ == null) {
-				Debug.LogWarning(
-					"Cannot connect to controller. Make sure you have Leap Motion v2.0+ installed");
-			}
+//			if (leap_controller_ == null) {
+//				Debug.LogWarning(
+//					"Cannot connect to controller. Make sure you have Leap Motion v2.0+ installed");
+//			}
 			
 			if (enableRecordPlayback && recordingAsset != null)
 				recorder_.Load(recordingAsset);
@@ -213,24 +171,24 @@ using Leap;
 			UpdateRecorder();
 			Frame frame = GetFrame();
 			
-			if (frame != null && !flag_initialized_)
+			if (frame != null && !flaginitialized_)
 			{
 				InitializeFlags();
 			}
 			
 			if (Input.GetKeyDown(KeyCode.H))
 			{
-				show_hands_ = !show_hands_;
+				showhands_ = !showhands_;
 			}
 			
-			if (show_hands_)
+			if (showhands_)
 			{
-				if (frame.Id != prev_graphics_id_)
+				if (frame.Id != prevgraphics_id_)
 				{
-					UpdateAction(frame);
+					UpdateActions(frame);
 					RotateView(frame);
 					UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
-					prev_graphics_id_ = frame.Id;
+					prevgraphics_id_ = frame.Id;
 				}
 			}
 			else
@@ -298,12 +256,12 @@ using Leap;
 			
 			Frame frame = GetFrame();
 			
-			if (frame.Id != prev_physics_id_)
+			if (frame.Id != prevphysics_id_)
 			{
 				UpdateActions(frame);
 				UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
 				UpdateToolModels(tools_, frame.Tools, toolModel);
-				prev_physics_id_ = frame.Id;
+				prevphysics_id_ = frame.Id;
 			}
 		}
 		
@@ -341,267 +299,44 @@ using Leap;
 			movementSettings.UpdateDesiredTargetSpeed(input);
 			return input;
 		}
+		
+		private void RotateView(Frame frame)
+		{
+			//avoids the mouse looking if the game is effectively paused
+			if (Mathf.Abs(Time.timeScale) < float.Epsilon) return;
+			
+			// get the rotation before it's changed
+			float oldYRotation = transform.eulerAngles.y;
 
-		protected HandModel CreateHand(HandModel model) {
-			HandModel hand_model = Instantiate(model, transform.position, transform.rotation)
-				as HandModel;
-			hand_model.gameObject.SetActive(true);
-			Leap.Utils.IgnoreCollisions(hand_model.gameObject, gameObject);
-			return hand_model;
+			
+			if (m_IsGrounded || advancedSettings.airControl)
+			{
+				// Rotate the rigidbody velocity to match the new direction that the character is looking
+				Quaternion velRotation = Quaternion.AngleAxis(transform.eulerAngles.y - oldYRotation, Vector3.up);
+				m_RigidBody.velocity = velRotation*m_RigidBody.velocity;
+			}
 		}
 		
-		protected void DestroyHand(HandModel hand_model) {
-			if (destroyHands)
-				Destroy(hand_model.gameObject);
+		
+		/// sphere cast down just beyond the bottom of the capsule to see if the capsule is colliding round the bottom
+		private void GroundCheck()
+		{
+			m_PreviouslyGrounded = m_IsGrounded;
+			RaycastHit hitInfo;
+			if (Physics.SphereCast(transform.position, m_Capsule.radius, Vector3.down, out hitInfo,
+			                       ((m_Capsule.height/2f) - m_Capsule.radius) + advancedSettings.groundCheckDistance))
+			{
+				m_IsGrounded = true;
+				m_GroundContactNormal = hitInfo.normal;
+			}
 			else
-				hand_model.SetLeapHand(null);
-		}
-		
-		protected void UpdateHandModels(Dictionary<int, HandModel> all_hands,
-		                                HandList leap_hands,
-		                                HandModel left_model, HandModel right_model) {
-			List<int> ids_to_check = new List<int>(all_hands.Keys);
-			
-			// Go through all the active hands and update them.
-			int num_hands = leap_hands.Count;
-			for (int h = 0; h < num_hands; ++h) {
-				Hand leap_hand = leap_hands[h];
-				
-				HandModel model = (mirrorZAxis != leap_hand.IsLeft) ? left_model : right_model;
-				
-				// If we've mirrored since this hand was updated, destroy it.
-				if (all_hands.ContainsKey(leap_hand.Id) &&
-				    all_hands[leap_hand.Id].IsMirrored() != mirrorZAxis) {
-					DestroyHand(all_hands[leap_hand.Id]);
-					all_hands.Remove(leap_hand.Id);
-				}
-				
-				// Only create or update if the hand is enabled.
-				if (model != null) {
-					ids_to_check.Remove(leap_hand.Id);
-					
-					// Create the hand and initialized it if it doesn't exist yet.
-					if (!all_hands.ContainsKey(leap_hand.Id)) {
-						HandModel new_hand = CreateHand(model);
-						new_hand.SetLeapHand(leap_hand);
-						new_hand.MirrorZAxis(mirrorZAxis);
-						new_hand.SetController(this);
-						
-						// Set scaling based on reference hand.
-						float hand_scale = MM_TO_M * leap_hand.PalmWidth / new_hand.handModelPalmWidth;
-						new_hand.transform.localScale = hand_scale * transform.lossyScale;
-						
-						new_hand.InitHand();
-						new_hand.UpdateHand();
-						all_hands[leap_hand.Id] = new_hand;
-					}
-					else {
-						// Make sure we update the Leap Hand reference.
-						HandModel hand_model = all_hands[leap_hand.Id];
-						hand_model.SetLeapHand(leap_hand);
-						hand_model.MirrorZAxis(mirrorZAxis);
-						
-						// Set scaling based on reference hand.
-						float hand_scale = MM_TO_M * leap_hand.PalmWidth / hand_model.handModelPalmWidth;
-						hand_model.transform.localScale = hand_scale * transform.lossyScale;
-						hand_model.UpdateHand();
-					}
-				}
-			}
-			
-			// Destroy all hands with defunct IDs.
-			for (int i = 0; i < ids_to_check.Count; ++i) {
-				DestroyHand(all_hands[ids_to_check[i]]);
-				all_hands.Remove(ids_to_check[i]);
-			}
-		}
-		
-		protected ToolModel CreateTool(ToolModel model) {
-			ToolModel tool_model = Instantiate(model, transform.position, transform.rotation) as ToolModel;
-			tool_model.gameObject.SetActive(true);
-			Leap.Utils.IgnoreCollisions(tool_model.gameObject, gameObject);
-			return tool_model;
-		}
-		
-			protected void UpdateToolModels(Dictionary<int, ToolModel> all_tools,
-			                                ToolList leap_tools, ToolModel model) {
-				List<int> ids_to_check = new List<int>(all_tools.Keys);
-				
-				// Go through all the active tools and update them.
-				int num_tools = leap_tools.Count;
-				for (int h = 0; h < num_tools; ++h) {
-					Tool leap_tool = leap_tools[h];
-					
-					// Only create or update if the tool is enabled.
-					if (model) {
-						
-						ids_to_check.Remove(leap_tool.Id);
-						
-						// Create the tool and initialized it if it doesn't exist yet.
-						if (!all_tools.ContainsKey(leap_tool.Id)) {
-							ToolModel new_tool = CreateTool(model);
-							new_tool.SetController(this);
-							new_tool.SetLeapTool(leap_tool);
-							new_tool.InitTool();
-							all_tools[leap_tool.Id] = new_tool;
-						}
-						
-						// Make sure we update the Leap Tool reference.
-						ToolModel tool_model = all_tools[leap_tool.Id];
-						tool_model.SetLeapTool(leap_tool);
-						tool_model.MirrorZAxis(mirrorZAxis);
-						
-						// Set scaling.
-						tool_model.transform.localScale = transform.lossyScale;
-						
-						tool_model.UpdateTool();
-					}
-				}
-				
-				// Destroy all tools with defunct IDs.
-				for (int i = 0; i < ids_to_check.Count; ++i) {
-					Destroy(all_tools[ids_to_check[i]].gameObject);
-					all_tools.Remove(ids_to_check[i]);
-				}
-			}
-			
-			public Controller GetLeapController() {
-				return leap_controller_;
-			}
-			
-			public Frame GetFrame() {
-				if (enableRecordPlayback && recorder_.state == RecorderState.Playing)
-					return recorder_.GetCurrentFrame();
-				
-				return leap_controller_.Frame();
-			}
-			
-			private void RotateView()
 			{
-				//avoids the mouse looking if the game is effectively paused
-				if (Mathf.Abs(Time.timeScale) < float.Epsilon) return;
-
-				// get the rotation before it's changed
-				float oldYRotation = transform.eulerAngles.y;
-
-				mouseLook.LookRotation (transform, cam.transform);
-
-				if (m_IsGrounded || advancedSettings.airControl)
-				{
-					// Rotate the rigidbody velocity to match the new direction that the character is looking
-					Quaternion velRotation = Quaternion.AngleAxis(transform.eulerAngles.y - oldYRotation, Vector3.up);
-					m_RigidBody.velocity = velRotation*m_RigidBody.velocity;
-				}
+				m_IsGrounded = false;
+				m_GroundContactNormal = Vector3.up;
 			}
-			
-			
-			/// sphere cast down just beyond the bottom of the capsule to see if the capsule is colliding round the bottom
-			private void GroundCheck()
+			if (!m_PreviouslyGrounded && m_IsGrounded && m_Jumping)
 			{
-				m_PreviouslyGrounded = m_IsGrounded;
-				RaycastHit hitInfo;
-				if (Physics.SphereCast(transform.position, m_Capsule.radius, Vector3.down, out hitInfo,
-				                       ((m_Capsule.height/2f) - m_Capsule.radius) + advancedSettings.groundCheckDistance))
-				{
-					m_IsGrounded = true;
-					m_GroundContactNormal = hitInfo.normal;
-				}
-				else
-				{
-					m_IsGrounded = false;
-					m_GroundContactNormal = Vector3.up;
-				}
-				if (!m_PreviouslyGrounded && m_IsGrounded && m_Jumping)
-				{
-					m_Jumping = false;
-				}
-			}
-		public bool IsConnected() {
-			return leap_controller_.IsConnected;
-		}
-		
-		public bool IsEmbedded() {
-			DeviceList devices = leap_controller_.Devices;
-			if (devices.Count == 0)
-				return false;
-			return devices[0].IsEmbedded;
-		}
-		
-		public HandModel[] GetAllGraphicsHands() {
-			if (hand_graphics_ == null)
-				return new HandModel[0];
-			
-			HandModel[] models = new HandModel[hand_graphics_.Count];
-			hand_graphics_.Values.CopyTo(models, 0);
-			return models;
-		}
-		
-		public HandModel[] GetAllPhysicsHands() {
-			if (hand_physics_ == null)
-				return new HandModel[0];
-			
-			HandModel[] models = new HandModel[hand_physics_.Count];
-			hand_physics_.Values.CopyTo(models, 0);
-			return models;
-		}
-		
-		public void DestroyAllHands() {
-			if (hand_graphics_ != null) {
-				foreach (HandModel model in hand_graphics_.Values)
-					Destroy(model.gameObject);
-				
-				hand_graphics_.Clear();
-			}
-			if (hand_physics_ != null) {
-				foreach (HandModel model in hand_physics_.Values)
-					Destroy(model.gameObject);
-				
-				hand_physics_.Clear();
-			}
-		}
-		
-		public float GetRecordingProgress() {
-			return recorder_.GetProgress();
-		}
-		
-		public void StopRecording() {
-			recorder_.Stop();
-		}
-		
-		public void PlayRecording() {
-			recorder_.Play();
-		}
-		
-		public void PauseRecording() {
-			recorder_.Pause();
-		}
-		
-		public string FinishAndSaveRecording() {
-			string path = recorder_.SaveToNewFile();
-			recorder_.Play();
-			return path;
-		}
-		
-		public void ResetRecording() {
-			recorder_.Reset();
-		}
-		
-		public void Record() {
-			recorder_.Record();
-		}
-		
-		protected void UpdateRecorder() {
-			if (!enableRecordPlayback)
-				return;
-			
-			recorder_.speed = recorderSpeed;
-			recorder_.loop = recorderLoop;
-			
-			if (recorder_.state == RecorderState.Recording) {
-				recorder_.AddFrame(leap_controller_.Frame());
-			}
-			else {
-				recorder_.NextFrame();
+				m_Jumping = false;
 			}
 		}
 
@@ -610,19 +345,19 @@ using Leap;
 			shoot(frame);
 			toss(frame);
 		}
-
+		
 		public void punch(Frame frame) {
 			HandList hands = frame.Hands;
 			int num_hands = hands.Count;
 			for (int h = 0; h < num_hands; ++h) {
 				Hand hand = hands[h];
-				double zVelocity = hand.palm_velocity.z;
-				if (hand.grabStrength > 0.8 && zVelocity < -500) {
+				double zVelocity = hand.PalmVelocity.z;
+				if (hand.GrabStrength > 0.8 && zVelocity < -500) {
+					// Punch something
 					if (punchDelay == true && punchStart.ElapsedMilliseconds > 0.0005) {
 						punchDelay = !punchDelay;
 					}
 					if (!punchDelay) {
-						// Punch something
 						punchStart.Reset();
 						punchDelay = true;
 					}	
@@ -635,8 +370,8 @@ using Leap;
 			int num_hands = hands.Count;
 			for (int h = 0; h < num_hands; ++h) {
 				Hand hand = hands[h];
-				double xVelocity = hand.palm_velocity.x;
-				if (hand.isRight) {
+				double xVelocity = hand.PalmVelocity.x;
+				if (hand.IsRight) {
 					Vector thumb = null;
 					Vector index = null;
 					Vector middle = null;
@@ -666,7 +401,7 @@ using Leap;
 				}
 			}
 		}
-
+		
 		public void toss(Frame frame) {
 			GestureList gestures = frame.Gestures();
 			for (int i = 0; i < gestures.Count; ++i) {
@@ -685,10 +420,11 @@ using Leap;
 				}
 			}
 		}
-
+		
 		public bool parseRightAngle (Vector thumb, Vector index, Vector middle) {
-	        return (Mathf.Abs((Mathf.Acos(thumb.Dot(index)) - Mathf.PI/2)) < 0.70) && 
-	        (Mathf.Abs((Mathf.Acos(thumb.Dot(middle)) - Mathf.PI/2)) < 0.70) &&
-	        index.Dot(middle) > 0.90;
-	    }
+			return (Mathf.Abs((Mathf.Acos(thumb.Dot(index)) - Mathf.PI/2)) < 0.70) && 
+				(Mathf.Abs((Mathf.Acos(thumb.Dot(middle)) - Mathf.PI/2)) < 0.70) &&
+					index.Dot(middle) > 0.90;
+		}
+	}
 }
