@@ -16,7 +16,7 @@ public abstract class HandModel : MonoBehaviour {
   public float handModelPalmWidth = 0.085f;
   public FingerModel[] fingers = new FingerModel[NUM_FINGERS];
 
-  protected Hand hand_;
+  public Hand hand_;
   protected HandController controller_;
   protected bool mirror_z_axis_ = false;
 

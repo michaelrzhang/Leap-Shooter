@@ -190,8 +190,12 @@ namespace _Scripts
 				{
 					UpdateActions(frame);
 					RotateView(frame);
-					UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
-					prevgraphics_id_ = frame.Id;
+					if (gunMode) {
+						UpdateHandModels(hand_graphics_,frame.Hands, leftGraphicsModel, GunGraphicsModel);
+					} else {
+						UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
+					}	
+						prevgraphics_id_ = frame.Id;
 				}
 			}
 			else
@@ -391,18 +395,22 @@ namespace _Scripts
 							middle = fingers[i].Direction;
 						}
 					}
-					if (parseRightAngle(thumb, index, middle) && xVelocity < -500) {
-						gunMode = true;
-						if (shootDelay == true && shootStart.ElapsedMilliseconds > 0.0005) {
-							shootDelay = !shootDelay;
-						}
-						if (!shootDelay) {
-							// Shoot something
-							shootStart.Reset();
-							int clip = 0;
-							GetComponent<AudioSource>().clip = audioClips[0];
-							GetComponent<AudioSource>().Play();
+					if (parseRightAngle(thumb, index, middle)) {
+						if (xVelocity < -500) {
+							gunMode = true;
+							if (shootDelay == true && shootStart.ElapsedMilliseconds > 0.0005) {
+								shootDelay = !shootDelay;
+							}
+							if (!shootDelay) {
+								// Shoot something
+								shootStart.Reset();
+								int clip = 0;
+								GetComponent<AudioSource>().clip = audioClips[0];
+								GetComponent<AudioSource>().Play();
+							}
 						}	
+					} else {
+						gunMode = false;
 					}
 				}
 			}
