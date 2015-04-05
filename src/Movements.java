@@ -11,6 +11,7 @@ class SampleListener extends Listener {
     public boolean punchDelay = false;
     public boolean shootDelay = false;
     public long start;
+    public long shootstart;
 
     public void onInit(Controller controller) {
         System.out.println("Initialized");
@@ -81,6 +82,8 @@ class SampleListener extends Listener {
             Vector index = null;
             Vector middle = null;
             // Get fingers
+            // // 
+            
             for (Finger finger : hand.fingers()) {
                 // System.out.println("    " + finger.type() + ", direction: " + finger.direction());
                 // Test.pw.println(finger.type() + ", direction: " + finger.direction());
@@ -88,10 +91,23 @@ class SampleListener extends Listener {
                 if (finger.type().toString().equals("TYPE_THUMB")) {
                     thumb = finger.direction();
                 }
+                /** Ideally you would want to scroll faster when you lean right more */
                 if (finger.type().toString().equals("TYPE_MIDDLE")) {
                     middle = finger.direction();
-                    System.out.println("Middle Finger Tip: " + finger.tipPosition());
-                    System.out.println("Middle Finger Direction: " + finger.direction());
+                    /** X coordinate determines finger position */
+                    // System.out.println(finger.direction());
+                    if (finger.tipPosition().getX() < -130 || finger.direction().getX() < -0.8) {
+                        System.out.println("LEFT!");
+                    } 
+                    if (finger.tipPosition().getX() > 130 || finger.direction().getX() > 0.7) {
+                        System.out.println("RIGHT!");
+                    } 
+                    /** may want to differentiate left and right since it is easier to turn left */
+                    if (Math.abs(finger.direction().getX()) > 0.6 && System.nanoTime() - shootstart > 3 * 10e8) {
+                        System.out.println(finger.direction().getX());
+                    }
+                    // System.out.println("Middle Finger Tip: " + finger.tipPosition());
+                    // System.out.println("Middle Finger Direction: " + finger.direction());
                 }
                 if (finger.type().toString().equals("TYPE_INDEX")) {
                     index = finger.direction();
@@ -99,12 +115,12 @@ class SampleListener extends Listener {
             }
 
             if (xVel < -500 && RightAngleParser.parseRightAngle(thumb, index, middle)) {
-                if (shootDelay == true && System.nanoTime() - start > 5 * 10e7) {
+                if (shootDelay == true && System.nanoTime() - shootstart > 5 * 10e7) {
                     shootDelay = !shootDelay;
                 }
                 if (!shootDelay) {
                     System.out.println("shot");
-                    start = System.nanoTime();
+                    shootstart = System.nanoTime();
                     shootDelay = true;
                     try {
                         MP3Player gunShot = new MP3Player(new File("gun-gunshot-01.mp3"));
