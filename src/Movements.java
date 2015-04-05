@@ -10,6 +10,7 @@ class SampleListener extends Listener {
     public boolean initialized = false;
     public boolean punchDelay = false;
     public boolean shootDelay = false;
+    public boolean gunMode = true; // IMPORTANT: whether throwing or gunning
     public long start;
     public long shootstart;
 
@@ -17,13 +18,13 @@ class SampleListener extends Listener {
         System.out.println("Initialized");
     }
 
-    // public void onConnect(Controller controller) {
-    //     System.out.println("Connected");
-    //     controller.enableGesture(Gesture.Type.TYPE_SWIPE);
-    //     controller.enableGesture(Gesture.Type.TYPE_CIRCLE);
-    //     controller.enableGesture(Gesture.Type.TYPE_SCREEN_TAP);
-    //     controller.enableGesture(Gesture.Type.TYPE_KEY_TAP);
-    // }
+    public void onConnect(Controller controller) {
+        System.out.println("Connected");
+        controller.enableGesture(Gesture.Type.TYPE_SWIPE);
+        // controller.enableGesture(Gesture.Type.TYPE_CIRCLE);
+        // controller.enableGesture(Gesture.Type.TYPE_SCREEN_TAP);
+        // controller.enableGesture(Gesture.Type.TYPE_KEY_TAP);
+    }
 
     public void onDisconnect(Controller controller) {
         //Note: not dispatched when running in a debugger.
@@ -87,7 +88,12 @@ class SampleListener extends Listener {
             for (Finger finger : hand.fingers()) {
                 // System.out.println("    " + finger.type() + ", direction: " + finger.direction());
                 // Test.pw.println(finger.type() + ", direction: " + finger.direction());
-                // System.out.println(finger.type().toString());
+                // System.out.println(finger.type().toString());'
+                if (gunMode) {
+                    System.out.println("Gun!");
+                } else {
+                    System.out.println("Grenade");
+                }
                 if (finger.type().toString().equals("TYPE_THUMB")) {
                     thumb = finger.direction();
                 }
@@ -117,21 +123,54 @@ class SampleListener extends Listener {
                     index = finger.direction();
                 }
             }
-
-            if (xVel < -500 && RightAngleParser.parseRightAngle(thumb, index, middle)) {
-                if (shootDelay == true && System.nanoTime() - shootstart > 5 * 10e7) {
-                    shootDelay = !shootDelay;
-                }
-                if (!shootDelay) {
-                    System.out.println("shot");
-                    shootstart = System.nanoTime();
-                    shootDelay = true;
-                    try {
-                        MP3Player gunShot = new MP3Player(new File("gun-gunshot-01.mp3"));
-                        gunShot.play();
-                    } catch (Exception e) {
-                        e.printStackTrace();
+            if (RightAngleParser.parseRightAngle(thumb, index, middle)) {
+                gunMode = true;
+                if (xVel < -500) {
+                    if (shootDelay == true && System.nanoTime() - shootstart > 5 * 10e7) {
+                        shootDelay = !shootDelay;
                     }
+                    if (!shootDelay) {
+                        System.out.println("shot");
+                        shootstart = System.nanoTime();
+                        shootDelay = true;
+                        try {
+                            MP3Player gunShot = new MP3Player(new File("gun-gunshot-01.mp3"));
+                            gunShot.play();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+
+            GestureList gestures = frame.gestures();
+            for (int i = 0; i < gestures.count(); i++) {
+                Gesture gesture = gestures.get(i);
+
+                switch (gesture.type()) {
+                    case TYPE_SWIPE:
+                    SwipeGesture swipe = new SwipeGesture(gesture);
+                    if(!gunMode) {
+                        for (int j = 0; j < 100; j++) {
+                            System.out.println("THROW!!");
+                        }
+                        Vector unit = swipe.direction();
+                        float grenadeSpeed = swipe.speed();
+                        /** Actual greande stuff */
+                        System.out.println(new Vector(unit.getX() * grenadeSpeed, 
+                            unit.getY() * grenadeSpeed, unit.getZ() * grenadeSpeed));
+
+                    } else {
+                        if (swipe.direction().dot(new Vector(0, -1, 0)) > 0.8) {
+                            gunMode = false;
+                        }
+                        System.out.println("  Swipe id: " + swipe.id()
+                                   + ", " + swipe.state()
+                                   + ", position: " + swipe.position()
+                                   + ", direction: " + swipe.direction()
+                                   + ", speed: " + swipe.speed());
+                    }
+                        break;
                 }
             }
 
