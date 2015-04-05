@@ -20,7 +20,6 @@ public class HandController : MonoBehaviour {
   public HandModel leftPhysicsModel;
   public HandModel rightGraphicsModel;
   public HandModel rightPhysicsModel;
-  public HandModel GunGraphicsModel;
   public AudioClip[] audioClips;
 
   public ToolModel toolModel;
@@ -258,6 +257,11 @@ public class HandController : MonoBehaviour {
     {
       // Destroy all hands with defunct IDs.
       List<int> hands = new List<int>(hand_graphics_.Keys);
+      for (int i = 0; i < hands.Count; ++i)
+      {
+        DestroyHand(hand_graphics_[hands[i]]);
+        hand_graphics_.Remove(hands[i]);
+      }
     }
   }
 

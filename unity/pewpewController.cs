@@ -12,14 +12,12 @@ namespace _Scripts
 	[RequireComponent(typeof (CapsuleCollider))]
 	public class pewpewController: HandController
 	{
+		public Rigidbody projectile;
 		public bool punchDelay = false;
 		public bool shootDelay = false;
 		public Stopwatch punchStart = new Stopwatch();
 		public Stopwatch shootStart = new Stopwatch();
 		public bool gunMode = true;
-//		public AudioClip gunSound = new AudioClip("gunshot.wav");
-//		public AudioClip punchSound = new AudioClip("punch.wav");
-//		public AudioClip[] audioClips;
 		
 		public class MovementSettings
 		{
@@ -190,12 +188,8 @@ namespace _Scripts
 				{
 					UpdateActions(frame);
 					RotateView(frame);
-					if (gunMode) {
-						UpdateHandModels(hand_graphics_,frame.Hands, leftGraphicsModel, GunGraphicsModel);
-					} else {
-						UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
-					}	
-						prevgraphics_id_ = frame.Id;
+					UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
+					prevgraphics_id_ = frame.Id;
 				}
 			}
 			else
@@ -315,13 +309,45 @@ namespace _Scripts
 			// get the rotation before it's changed
 			float oldYRotation = transform.eulerAngles.y;
 
-			
-			if (m_IsGrounded || advancedSettings.airControl)
-			{
-				// Rotate the rigidbody velocity to match the new direction that the character is looking
-				Quaternion velRotation = Quaternion.AngleAxis(transform.eulerAngles.y - oldYRotation, Vector3.up);
-				m_RigidBody.velocity = velRotation*m_RigidBody.velocity;
+			HandList hands = frame.Hands;
+			int num_hands = hands.Count;
+			float rotationSpeed = 0.0f;
+			for (int h = 0; h < num_hands; ++h) {
+				Hand hand = hands [h];
+				if (hand.IsRight) {
+					FingerList fingers = hand.Fingers;
+					double xPointer = fingers[2].Direction.x;
+					if (xPointer > 0.5) {
+						rotationSpeed = (float) xPointer * 4 / 5 + 0.2f;
+					} else if (xPointer < -0.6 && (shootStart.ElapsedMilliseconds > 0.00003 || shootStart.ElapsedMilliseconds == 0)) {
+						rotationSpeed = (float) xPointer;
+					}
+				}
 			}
+
+//			if (m_IsGrounded || advancedSettings.airControl)
+//			{
+				// Rotate the rigidbody velocity to match the new direction that the character is looking
+//				Quaternion velRotation = Quaternion.AngleAxis(transform.eulerAngles.y - oldYRotation, Vector3.up);
+//				m_RigidBody.velocity = velRotation*m_RigidBody.velocity;
+//				if (rotationSpeed > 0) {
+//				transform.Rotate(0, 75 * Time.deltaTime * rotationSpeed, 0);
+//				Vector3 hax = transform.forward;
+//				hax.z = -hax.z;
+//				m_RigidBody.transform.Translate(hax * Time.deltaTime / 10, Camera.main.transform);
+//				} else {
+					transform.Rotate(0, 45 * Time.deltaTime * rotationSpeed, 0);
+//				}
+//				double hitdist = 10.0;
+
+//				Vector3 playerToPoint = new Vector3(3, 0, 3);
+//				Quaternion newRotation = Quaternion.LookRotation(playerToPoint);
+//				m_RigidBody.MoveRotation (newRotation);
+				
+//				
+//			leftPhysicsModel.MirrorZAxis (transform);
+//			rightPhysicsModel.MirrorZAxis (transform);
+			//			}
 		}
 		
 		
@@ -383,6 +409,8 @@ namespace _Scripts
 					Vector thumb = null;
 					Vector index = null;
 					Vector middle = null;
+					Vector tipA = null;
+					Vector3 tip = new Vector3(0, 0, 0);
 					FingerList fingers = hand.Fingers;
 					for (int i = 0; i < 5; ++i) {
 						if (i == 0) {
@@ -393,24 +421,28 @@ namespace _Scripts
 						}
 						if (i == 2) {
 							middle = fingers[i].Direction;
+							tipA = fingers[i].TipPosition;
+							tip.x = tipA.x;
+							tip.y = tipA.y;
+							tip.z = tipA.z;
 						}
 					}
-					if (parseRightAngle(thumb, index, middle)) {
-						if (xVelocity < -500) {
-							gunMode = true;
-							if (shootDelay == true && shootStart.ElapsedMilliseconds > 0.0005) {
-								shootDelay = !shootDelay;
-							}
-							if (!shootDelay) {
-								// Shoot something
-								shootStart.Reset();
-								int clip = 0;
-								GetComponent<AudioSource>().clip = audioClips[0];
-								GetComponent<AudioSource>().Play();
-							}
+					if (parseRightAngle(thumb, index, middle) && xVelocity < -500) {
+						gunMode = true;
+						if (shootDelay == true && shootStart.ElapsedMilliseconds > 1000) {
+							shootDelay = !shootDelay;
+						}
+						if (!shootDelay) {
+							Rigidbody projectileClone = (Rigidbody) Instantiate(projectile, new Vector3(0, 0, 0), Quaternion.identity);
+							Vector3 force = new Vector3(tip.x, tip.z, tip.y);
+							projectileClone.velocity = force;
+							GetComponent<Rigidbody>().AddForce(force * Time.deltaTime / 1000);
+
+							shootStart.Reset();
+							int clip = 0;
+							GetComponent<AudioSource>().clip = audioClips[0];
+							GetComponent<AudioSource>().Play();
 						}	
-					} else {
-						gunMode = false;
 					}
 				}
 			}
@@ -425,9 +457,12 @@ namespace _Scripts
 					if (!gunMode) {
 						Vector unit = swipe.Direction;
 						float grenadeSpeed = swipe.Speed;
+						int clip = 2;
+						GetComponent<AudioSource>().clip = audioClips[2];
+						GetComponent<AudioSource>().Play();
 						// Throw a grenade in the direction of (unit.x * grenadeSpeed, unit.y * grenadeSpeed, unit.z * grenadeSpeed)
 					} else {
-						if (swipe.Direction.Dot(new Vector(0, -1, 0)) > 0.8) {
+						if (swipe.Direction.Dot(new Vector(0, -1, 0)) > 0.7) {
 							gunMode = false;
 						}
 					}
